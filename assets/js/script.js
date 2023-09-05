@@ -12,6 +12,18 @@ document.getElementById("status").addEventListener("click", e => getStatus(e));
     const data = await response.json();
 
     if (response.ok) {
-        console.log(data.expiry);
+        displayStatus(data);
+    } else {
+        throw new Error(data.error);
     }
+ }
+
+ function displayStatus(data){
+    let title = document.getElementById("resultsModalTitle");
+    title.textContent = "API Key Status";
+    
+    let bodyText = document.getElementById("results-content");
+    bodyText.innerHTML = `<div class="key-status">Your key is valid until<br> ${data.expiry}</div>`
+
+    resultsModal.show();
  }
