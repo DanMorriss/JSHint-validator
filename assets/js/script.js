@@ -13,6 +13,7 @@ function processOptions(form) {
             optArray.push(entry[1]);
         }
     }
+
     form.delete("options");
 
     form.append("options", optArray.join());
@@ -21,49 +22,30 @@ function processOptions(form) {
 }
 
 async function postForm(e) {
-    const form = processOptions(new FormData(document.getElementById('checksform')));
+
+    const form = processOptions(new FormData(document.getElementById("checksform")));
 
     const response = await fetch(API_URL, {
         method: "POST",
         headers: {
             "Authorization": API_KEY,
         },
-            body: form,
-        });
-    
-        const data = await response.json();
+        body: form,
+    });
 
-        if (response.ok) {
-            displayErrors(data);
-        } else {
-            throw new Error(data.error);
-        }
-}
+    const data = await response.json();
 
-function displayErrors(data) {
-
-    let results = "";
-
-    let heading = `JSHint Results for ${data.file}`;
-
-    if (data.total_errors === 0) {
-        results = `<div class="no-errors">No errors reported!</div>`;
+    if (response.ok) {
+        displayErrors(data);
     } else {
-        results = `<div>Total Errors: <span class="error-count">${data.total_errors}</span></div>`;
-        for (let error of data.error_list) {
-            results += `<div>At line <span class="line">${error.line}</span>, `;
-            results += `column <span class="column">${error.col}</span></div>`;
-            results += `<div class="error">${error.error}</div>`;
-        }
+        displayException(data);
+        throw new Error(data.error);
     }
-
-    document.getElementById("resultsModalTitle").innerText = heading;
-    document.getElementById("results-content").innerHTML = results;
-    resultsModal.show();
 
 }
 
 async function getStatus(e) {
+
     const queryString = `${API_URL}?api_key=${API_KEY}`;
 
     const response = await fetch(queryString);
@@ -73,17 +55,54 @@ async function getStatus(e) {
     if (response.ok) {
         displayStatus(data);
     } else {
+        displayException(data);
         throw new Error(data.error);
     }
+
 }
 
-function displayStatus(data){
-    let title = document.getElementById("resultsModalTitle");
-    title.textContent = "API Key Status";
+function displayException(data) {
 
-    let bodyText = document.getElementById("results-content");
-    bodyText.innerHTML = `<div class="key-status">Your key is valid until<br> ${data.expiry}</div>`
+    let heading = `<div class="error-heading">An Exception Occurred</div>`;
 
+    results = `<div>The API returned status code ${data.status_code}</div>`;
+    results += `<div>Error number: <strong>${data.error_no}</strong></div>`;
+    results += `<div>Error text: <strong>${data.error}</strong></div>`;
+
+    document.getElementById("resultsModalTitle").innerText = heading;
+    document.getElementById("results-content").innerHTML = results;
     resultsModal.show();
 }
 
+function displayErrors(data) {
+
+    let results = "";
+
+    let heading = `JSHint Results for ${data.file}`;
+    if (data.total_errors === 0) {
+        results = `<div class="no_errors">No errors reported!</div>`;
+    } else {
+        results = `<div>Total Errors: <span class="error_count">${data.total_errors}</span></div>`;
+        for (let error of data.error_list) {
+            results += `<div>At line <span class="line">${error.line}</span>, `;
+            results += `column <span class="column">${error.col}:</span></div>`;
+            results += `<div class="error">${error.error}</div>`;
+        }
+    }
+
+    document.getElementById("resultsModalTitle").innerText = heading;
+    document.getElementById("results-content").innerHTML = results;
+    resultsModal.show();
+}
+	
+function displayStatus(data) {	
+
+    let heading = "API Key Status";	
+    let results = `<div>Your key is valid until</div>`;	
+    results += `<div class="key-status">${data.expiry}</div>`;	
+
+    document.getElementById("resultsModalTitle").innerText = heading;	
+    document.getElementById("results-content").innerHTML = results;	
+    resultsModal.show();
+
+}
